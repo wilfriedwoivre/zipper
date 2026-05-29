@@ -25,3 +25,4 @@ jobs:
         with:
           name: my-artifact
           path: temp
+          public: true
