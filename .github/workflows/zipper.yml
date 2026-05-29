@@ -11,6 +11,8 @@ on:
 jobs:
   zipFile: 
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download a file
         run: |
@@ -18,11 +20,23 @@ jobs:
           cd temp
           curl -LO ${{ github.event.inputs.filetozip }}
           cd -
-      - name: Debug
+
+      - name: Zip the file
         run: |
-          ls -Ral
-      - uses: actions/upload-artifact@v4.6.2
-        with:
-          name: my-artifact
-          path: temp
-          public: true
+          cd temp
+          zip -r ../artifact.zip .
+          cd -
+
+      - name: Debug
+        run: ls -Ral
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="run-${{ github.run_number }}"
+          gh release create "$TAG" artifact.zip \
+            --repo "${{ github.repository }}" \
+            --title "Release $TAG" \
+            --notes "Artifact from workflow run #${{ github.run_number }}: ${{ github.event.inputs.filetozip }}" \
+            --latest
